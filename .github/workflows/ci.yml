@@ -1,0 +1,19 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v1
+      - name: Install Package Dependencies
+        run: yarn install
+      - name: Run TypeScript Compile
+        run: yarn jest
+      - name: yarn tsc
