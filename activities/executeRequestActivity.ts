@@ -35,6 +35,7 @@ export async function executeRequestActivity(
 	} catch (err) {
 		return {
 			jsonrpc: '2.0',
+			id: request.id,
 			error: new JRPCError(JRPCErrorCodes.INTERNAL_ERROR, err.message, err)
 		}
 	}

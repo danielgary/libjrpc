@@ -1,7 +1,7 @@
 export { JRPCMethod } from './JRPCMethod'
 export { JRPCRequest } from './JRPCRequest'
 export { JRPCRequestBody } from './JRPCRequestBody'
-export { JRPCRequestParams } from './JRPCRequestParams'
+
 export { JRPCResponse } from './JRPCResponse'
 export { JRPCResponseBody } from './JRPCResponseBody'
 export { JRPCServer } from './JRPCServer'
