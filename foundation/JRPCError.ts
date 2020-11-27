@@ -10,4 +10,12 @@ export class JRPCError extends Error {
 		this.data = data
 		Object.setPrototypeOf(this, new.target.prototype) // restore prototype chain
 	}
+
+	public toJSON(): Record<string, unknown> {
+		return {
+			code: this.code,
+			message: this.message,
+			data: this.data
+		}
+	}
 }
