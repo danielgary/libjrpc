@@ -1,3 +1,3 @@
 import { JRPCResponseBody } from './JRPCResponseBody'
 
-export type JRPCResponse = JRPCResponseBody | JRPCResponseBody[] | undefined | undefined[]
+export type JRPCResponse = JRPCResponseBody | JRPCResponseBody[] | undefined
