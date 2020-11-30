@@ -18,19 +18,16 @@ export async function executeRequestActivity(
 
 	try {
 		const requestHandler = knownMethods[request.method]
-		if (!requestHandler) {
-			throw new JRPCError(JRPCErrorCodes.INVALID_REQUEST, `No method found for ${request.method}`, request)
+
+		const result = await requestHandler(request.params, context)
+		if (request.id) {
+			return {
+				jsonrpc: '2.0',
+				result,
+				id: request.id
+			} as JRPCResponseBody
 		} else {
-			const result = await requestHandler(request.params, context)
-			if (request.id) {
-				return {
-					jsonrpc: '2.0',
-					result,
-					id: request.id
-				} as JRPCResponseBody
-			} else {
-				return
-			}
+			return
 		}
 	} catch (err) {
 		return {

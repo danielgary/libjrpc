@@ -1,3 +1,4 @@
+import { JRPCError } from '../foundation/JRPCError'
 import { validateRequestActivity } from './validateRequestActivity'
 
 const knownMethods = {
@@ -8,26 +9,26 @@ const knownMethods = {
 
 describe('validateRequestActivity', () => {
 	it('should throw if passed a request with invalid id', () => {
-		expect(() =>
+		expect(
 			validateRequestActivity({ id: 1.23, method: 'failure', params: [], jsonrpc: '2.0' }, knownMethods)
-		).toThrow()
+		).toBeInstanceOf(JRPCError)
 	})
 	it('should throw if passed a request with invalid params', () => {
-		expect(() =>
+		expect(
 			validateRequestActivity({ id: 1, method: 'failure', params: 123, jsonrpc: '2.0' }, knownMethods)
-		).toThrow()
+		).toBeInstanceOf(JRPCError)
 	})
 	it('should throw if passed a request with invalid jsonrpc', () => {
-		expect(() =>
+		expect(
 			validateRequestActivity({ id: 1, method: 'failure', params: 123, jsonrpc: '-2.0' }, knownMethods)
-		).toThrow()
+		).toBeInstanceOf(JRPCError)
 	})
 	it('should throw if passed a request with an invalid method', () => {
-		expect(() =>
+		expect(
 			validateRequestActivity({ id: 1, method: 'failure', params: [], jsonrpc: '2.0' }, knownMethods)
-		).toThrow()
+		).toBeInstanceOf(JRPCError)
 	})
 	it('should not throw if passed a valid request', () => {
-		expect(validateRequestActivity({ id: 1, method: 'success', params: [], jsonrpc: '2.0' }, knownMethods)).toBeTruthy()
+		expect(validateRequestActivity({ id: 1, method: 'success', params: [], jsonrpc: '2.0' }, knownMethods)).toBeNull()
 	})
 })
