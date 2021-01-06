@@ -1,7 +1,6 @@
-export { JRPCMethod } from './JRPCMethod'
-export { JRPCRequest } from './JRPCRequest'
-export { JRPCRequestBody } from './JRPCRequestBody'
-
-export { JRPCResponse } from './JRPCResponse'
-export { JRPCResponseBody } from './JRPCResponseBody'
-export { JRPCServer } from './JRPCServer'
+export type { JRPCMethod } from './JRPCMethod'
+export type { JRPCRequest } from './JRPCRequest'
+export type { JRPCRequestBody } from './JRPCRequestBody'
+export type { JRPCResponse } from './JRPCResponse'
+export type { JRPCResponseBody } from './JRPCResponseBody'
+export type { JRPCServer } from './JRPCServer'
