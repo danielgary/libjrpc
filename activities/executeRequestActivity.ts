@@ -36,6 +36,12 @@ export async function executeRequestActivity(
 				id: request.id,
 				error: new JRPCError(JRPCErrorCodes.INTERNAL_ERROR, err.message, err)
 			}
+		} else {
+			return {
+				jsonrpc: '2.0',
+				id: request.id,
+				error: new JRPCError(JRPCErrorCodes.INTERNAL_ERROR)
+			}
 		}
 	}
 }
