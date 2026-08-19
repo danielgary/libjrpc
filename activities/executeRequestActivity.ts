@@ -1,17 +1,17 @@
 import { JRPCErrorCodes } from '../foundation/constants/JRPCErrorCodes'
 import { JRPCError } from '../foundation/JRPCError'
-import { JRPCMethod } from '../foundation/types/JRPCMethod'
+import { JRPCId } from '../foundation/types/JRPCId'
+import { JRPCMethodMap } from '../foundation/types/JRPCMethod'
 import { JRPCRequestBody } from '../foundation/types/JRPCRequestBody'
-import { JRPCResponse } from '../foundation/types/JRPCResponse'
 import { JRPCResponseBody } from '../foundation/types/JRPCResponseBody'
 import { JRPCErrorHandler } from '../foundation/types/JRPCServerOptions'
 import { isJSONValue } from '../foundation/types/JSONValue'
 
-async function reportError(
-	onError: JRPCErrorHandler | undefined,
+async function reportError<TContext>(
+	onError: JRPCErrorHandler<TContext> | undefined,
 	error: unknown,
 	request: JRPCRequestBody,
-	context?: unknown
+	context?: TContext
 ): Promise<void> {
 	if (!onError) {
 		return
@@ -24,12 +24,12 @@ async function reportError(
 	}
 }
 
-export async function executeRequestActivity(
+export async function executeRequestActivity<TContext>(
 	request: JRPCRequestBody,
-	knownMethods: { [methodName: string]: JRPCMethod },
-	context?: unknown,
-	onError?: JRPCErrorHandler
-): Promise<JRPCResponse> {
+	knownMethods: JRPCMethodMap<TContext>,
+	context?: TContext,
+	onError?: JRPCErrorHandler<TContext>
+): Promise<JRPCResponseBody | undefined> {
 	try {
 		const requestHandler = knownMethods[request.method]
 
@@ -42,7 +42,7 @@ export async function executeRequestActivity(
 			return {
 				jsonrpc: '2.0',
 				result,
-				id: request.id
+				id: request.id as JRPCId
 			} as JRPCResponseBody
 		} else {
 			return
@@ -57,14 +57,14 @@ export async function executeRequestActivity(
 		if (err instanceof JRPCError) {
 			return {
 				jsonrpc: '2.0',
-				id: request.id,
+				id: request.id as JRPCId,
 				error: err
 			}
 		}
 
 		return {
 			jsonrpc: '2.0',
-			id: request.id,
+			id: request.id as JRPCId,
 			error: new JRPCError(JRPCErrorCodes.INTERNAL_ERROR, 'Internal error')
 		}
 	}

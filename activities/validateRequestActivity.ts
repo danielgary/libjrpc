@@ -1,6 +1,6 @@
 import { JRPCErrorCodes } from '../foundation/constants/JRPCErrorCodes'
 import { JRPCError } from '../foundation/JRPCError'
-import { JRPCMethod } from '../foundation/types/JRPCMethod'
+import { JRPCMethodMap } from '../foundation/types/JRPCMethod'
 
 import { validateRequestId } from '../operations/validation/validateRequestId'
 
@@ -31,9 +31,9 @@ export function isNotificationRequest(request: unknown): boolean {
 	)
 }
 
-export function validateRequestActivity(
+export function validateRequestActivity<TContext>(
 	request: unknown,
-	knownMethods: { [methodName: string]: JRPCMethod }
+	knownMethods: JRPCMethodMap<TContext>
 ): JRPCError | null {
 	if (!isRequestObject(request)) {
 		return new JRPCError(JRPCErrorCodes.INVALID_REQUEST, 'Request must be an object')

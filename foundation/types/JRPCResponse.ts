@@ -1,3 +1,7 @@
 import { JRPCResponseBody } from './JRPCResponseBody'
+import { JSONValue } from './JSONValue'
 
-export type JRPCResponse = JRPCResponseBody | JRPCResponseBody[] | undefined
+export type JRPCResponse<TResult extends JSONValue = JSONValue> =
+	| JRPCResponseBody<TResult>
+	| JRPCResponseBody<TResult>[]
+	| undefined

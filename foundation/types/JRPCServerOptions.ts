@@ -1,12 +1,15 @@
 import { JRPCRequestBody } from './JRPCRequestBody'
 
-export type JRPCErrorHandlerDetails = {
-	context?: unknown
+export type JRPCErrorHandlerDetails<TContext = unknown> = {
+	context?: TContext
 	request: JRPCRequestBody
 }
 
-export type JRPCErrorHandler = (error: unknown, details: JRPCErrorHandlerDetails) => Promise<void> | void
+export type JRPCErrorHandler<TContext = unknown> = (
+	error: unknown,
+	details: JRPCErrorHandlerDetails<TContext>
+) => Promise<void> | void
 
-export type JRPCServerOptions = {
-	onError?: JRPCErrorHandler
+export type JRPCServerOptions<TContext = unknown> = {
+	onError?: JRPCErrorHandler<TContext>
 }
