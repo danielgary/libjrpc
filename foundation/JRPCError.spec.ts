@@ -23,4 +23,10 @@ describe('JRPCError', () => {
 	it('should reject non-integer error codes', () => {
 		expect(() => new JRPCError(1.5, 'Invalid code')).toThrow('JRPC error code must be an integer')
 	})
+
+	it('should reject non-JSON error data', () => {
+		expect(() => new JRPCError(1234, 'Invalid data', { value: undefined } as any)).toThrow(
+			'JRPC error data must be JSON-compatible'
+		)
+	})
 })

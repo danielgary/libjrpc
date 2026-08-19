@@ -1,5 +1,5 @@
 import { JRPCErrorCodes } from './constants/JRPCErrorCodes'
-import { JSONValue } from './types/JSONValue'
+import { isJSONValue, JSONValue } from './types/JSONValue'
 
 export class JRPCError extends Error {
 	public code: JRPCErrorCodes | number
@@ -9,6 +9,9 @@ export class JRPCError extends Error {
 		super(message) // 'Error' breaks prototype chain here
 		if (!Number.isInteger(code)) {
 			throw new TypeError('JRPC error code must be an integer')
+		}
+		if (data !== undefined && !isJSONValue(data)) {
+			throw new TypeError('JRPC error data must be JSON-compatible')
 		}
 
 		this.name = 'JRPCError'

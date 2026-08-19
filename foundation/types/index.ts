@@ -1,5 +1,6 @@
 export type { JRPCMethod } from './JRPCMethod'
 export type { JSONPrimitive, JSONValue } from './JSONValue'
+export { isJSONValue } from './JSONValue'
 export type { JRPCRequest } from './JRPCRequest'
 export type { JRPCRequestBody } from './JRPCRequestBody'
 export type { JRPCResponse } from './JRPCResponse'

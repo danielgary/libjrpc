@@ -3,7 +3,7 @@ import { createJRPCServer, JRPCError, JRPCErrorCodes } from './index'
 describe('createJRPCServer', () => {
 	const createServer = () =>
 		createJRPCServer({
-			echo: async (params): Promise<unknown> => params,
+			echo: async (params) => params,
 			fail: async (): Promise<never> => {
 				throw new Error('failure')
 			}
@@ -16,7 +16,7 @@ describe('createJRPCServer', () => {
 	})
 
 	it('executes a notification without returning a response', async () => {
-		const echo = jest.fn(async (params): Promise<unknown> => params)
+		const echo = jest.fn(async (params) => params)
 		const server = createJRPCServer({ echo })
 
 		const response = await server.handleRequest({ jsonrpc: '2.0', method: 'echo', params: ['value'] })
@@ -84,13 +84,14 @@ describe('createJRPCServer', () => {
 	})
 
 	it('allows params to be omitted', async () => {
-		const handler = jest.fn(async (params): Promise<unknown> => params)
+		const handler = jest.fn(async (params) => params)
 		const server = createJRPCServer({ handler })
 
 		const response = await server.handleRequest({ id: 1, jsonrpc: '2.0', method: 'handler' })
 
 		expect(handler).toHaveBeenCalledWith(undefined, undefined)
-		expect(response).toEqual({ id: 1, jsonrpc: '2.0', result: undefined })
+		expect(response).toEqual({ id: 1, jsonrpc: '2.0', result: null })
+		expect(JSON.stringify(response)).toContain('"result":null')
 	})
 
 	it('rejects null params', async () => {
@@ -234,6 +235,47 @@ describe('createJRPCServer', () => {
 		)
 
 		const response = await server.handleRequest({ id: 1, jsonrpc: '2.0', method: 'fail' })
+
+		expect(response).toEqual({
+			error: expect.objectContaining({ code: JRPCErrorCodes.INTERNAL_ERROR, message: 'Internal error' }),
+			id: 1,
+			jsonrpc: '2.0'
+		})
+	})
+
+	it('returns nested JSON-compatible results', async () => {
+		const result = { nested: { values: [1, 'two', true, null] } }
+		const server = createJRPCServer({ result: async () => result })
+
+		const response = await server.handleRequest({ id: 1, jsonrpc: '2.0', method: 'result' })
+
+		expect(response).toEqual({ id: 1, jsonrpc: '2.0', result })
+		expect(JSON.parse(JSON.stringify(response))).toEqual(response)
+	})
+
+	it.each([BigInt(1), Symbol('value'), () => undefined, new Date(), NaN, Infinity])(
+		'returns Internal error for unsupported result %p',
+		async (result) => {
+			const onError = jest.fn()
+			const server = createJRPCServer({ result: async (): Promise<any> => result }, { onError })
+
+			const response = await server.handleRequest({ id: 1, jsonrpc: '2.0', method: 'result' })
+
+			expect(response).toEqual({
+				error: expect.objectContaining({ code: JRPCErrorCodes.INTERNAL_ERROR, message: 'Internal error' }),
+				id: 1,
+				jsonrpc: '2.0'
+			})
+			expect(onError).toHaveBeenCalledWith(expect.any(TypeError), expect.any(Object))
+		}
+	)
+
+	it('returns Internal error for cyclic results', async () => {
+		const result: { self?: unknown } = {}
+		result.self = result
+		const server = createJRPCServer({ result: async (): Promise<any> => result })
+
+		const response = await server.handleRequest({ id: 1, jsonrpc: '2.0', method: 'result' })
 
 		expect(response).toEqual({
 			error: expect.objectContaining({ code: JRPCErrorCodes.INTERNAL_ERROR, message: 'Internal error' }),

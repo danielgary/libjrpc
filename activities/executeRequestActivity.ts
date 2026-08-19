@@ -5,6 +5,7 @@ import { JRPCRequestBody } from '../foundation/types/JRPCRequestBody'
 import { JRPCResponse } from '../foundation/types/JRPCResponse'
 import { JRPCResponseBody } from '../foundation/types/JRPCResponseBody'
 import { JRPCErrorHandler } from '../foundation/types/JRPCServerOptions'
+import { isJSONValue } from '../foundation/types/JSONValue'
 
 async function reportError(
 	onError: JRPCErrorHandler | undefined,
@@ -32,7 +33,11 @@ export async function executeRequestActivity(
 	try {
 		const requestHandler = knownMethods[request.method]
 
-		const result = await requestHandler(request.params, context)
+		const handlerResult = await requestHandler(request.params, context)
+		const result = handlerResult === undefined ? null : handlerResult
+		if (!isJSONValue(result)) {
+			throw new TypeError('JRPC method result must be JSON-compatible')
+		}
 		if (Object.prototype.hasOwnProperty.call(request, 'id')) {
 			return {
 				jsonrpc: '2.0',

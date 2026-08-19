@@ -1,26 +1,31 @@
 # libjrpc
+
 Transport Agnostic JSON RPC Library
 
-
 ## The goal of libjrpc is to provide a JSON RPC Server implementation that can run in any Node environment
+
 Here is a basic example of it running in an express-like environment
 
+Method results and `JRPCError.data` must contain JSON-compatible values. A method that returns `undefined` or has no
+return value produces a JSON `null` result. Unsupported values, including `bigint`, functions, symbols, non-finite
+numbers, class instances, and cyclic objects, are reported as internal errors.
+
 ```js
-import { createJRPCServer } from 'libjrpc';
+import { createJRPCServer } from 'libjrpc'
 const jrpcServer = createJRPCServer({
-  'hello_world': (args, context) => {
-    return 'Hello, world!'
-  }
+	hello_world: (args, context) => {
+		return 'Hello, world!'
+	}
 })
 
 app.post('/api/jsonrpc', async (req, res) => {
-  const response = await jrpcServer.handleRequest(req.body, context);
-  res.json({data: response})
+	const response = await jrpcServer.handleRequest(req.body, context)
+	res.json({ data: response })
 })
-
 ```
 
 Here's a handy JSON RPC hook for react:
+
 ```jsx
 import { useCallback, useState } from 'react'
 
@@ -90,13 +95,20 @@ export const useProcedure = <TParams, TResult>(methodName: string): UseProcedure
 ```
 
 You can use it like this:
-```jsx
-const {execute, loading, error, result} = useProcedure('hello_world')
 
-return ( 
-  <div>
-    <button onClick={()=>{execute({})}}>Execute</button>
-      Result: {result}
-    </div>
+```jsx
+const { execute, loading, error, result } = useProcedure('hello_world')
+
+return (
+	<div>
+		<button
+			onClick={() => {
+				execute({})
+			}}
+		>
+			Execute
+		</button>
+		Result: {result}
+	</div>
 )
 ```
