@@ -31,3 +31,9 @@ Params, results, and `JRPCError.data` must be JSON-compatible. Void handler resu
 - `JRPCResponse` represents a single response, a batch response, or `undefined` for notifications.
 
 `handleRequest` overloads narrow the return type for known calls, notifications, non-empty batches, and empty batches.
+
+## Method discovery
+
+The server no longer mutates the supplied method object or automatically exposes its method names. Pass
+`{ enableDiscovery: true }` as the second argument to retain the legacy `rpc_discover` method. This compatibility method
+returns the registered method names; it is not an OpenRPC service-discovery document.

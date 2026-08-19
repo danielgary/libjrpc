@@ -1,4 +1,4 @@
-import { createJRPCServer, JRPCError, JRPCErrorCodes } from './index'
+import { createJRPCServer, JRPCError, JRPCErrorCodes, JRPCMethodMap } from './index'
 
 describe('createJRPCServer', () => {
 	const createServer = () =>
@@ -280,6 +280,71 @@ describe('createJRPCServer', () => {
 		expect(response).toEqual({
 			error: expect.objectContaining({ code: JRPCErrorCodes.INTERNAL_ERROR, message: 'Internal error' }),
 			id: 1,
+			jsonrpc: '2.0'
+		})
+	})
+
+	it('does not mutate the supplied method registry', () => {
+		const methods: JRPCMethodMap = { echo: async (params) => params }
+
+		createJRPCServer(methods)
+
+		expect(Object.keys(methods)).toEqual(['echo'])
+		expect(methods).not.toHaveProperty('rpc_discover')
+	})
+
+	it('supports frozen method registries', async () => {
+		const methods = Object.freeze<JRPCMethodMap>({ echo: async (params) => params })
+		const server = createJRPCServer(methods)
+
+		expect(await server.handleRequest({ id: 1, jsonrpc: '2.0', method: 'echo', params: ['value'] })).toEqual({
+			id: 1,
+			jsonrpc: '2.0',
+			result: ['value']
+		})
+	})
+
+	it('disables discovery by default', async () => {
+		const server = createJRPCServer({ echo: async (params) => params })
+
+		expect(server.getRequestHandler('rpc_discover')).toBeUndefined()
+		expect(await server.handleRequest({ id: 1, jsonrpc: '2.0', method: 'rpc_discover' })).toEqual({
+			error: expect.objectContaining({ code: JRPCErrorCodes.METHOD_NOT_FOUND }),
+			id: 1,
+			jsonrpc: '2.0'
+		})
+	})
+
+	it('exposes the legacy discovery method when explicitly enabled', async () => {
+		const server = createJRPCServer({ echo: async (params) => params }, { enableDiscovery: true })
+
+		expect(await server.handleRequest({ id: 1, jsonrpc: '2.0', method: 'rpc_discover' })).toEqual({
+			id: 1,
+			jsonrpc: '2.0',
+			result: ['echo', 'rpc_discover']
+		})
+	})
+
+	it('rejects discovery method collisions', () => {
+		expect(() => createJRPCServer({ rpc_discover: async () => [] }, { enableDiscovery: true })).toThrow(
+			'Cannot enable discovery when rpc_discover is already registered'
+		)
+	})
+
+	it('isolates the server from later caller registry changes', async () => {
+		const methods: JRPCMethodMap = { value: async () => 'original' }
+		const server = createJRPCServer(methods)
+		methods.value = async () => 'replacement'
+		methods.added = async () => 'added'
+
+		expect(await server.handleRequest({ id: 1, jsonrpc: '2.0', method: 'value' })).toEqual({
+			id: 1,
+			jsonrpc: '2.0',
+			result: 'original'
+		})
+		expect(await server.handleRequest({ id: 2, jsonrpc: '2.0', method: 'added' })).toEqual({
+			error: expect.objectContaining({ code: JRPCErrorCodes.METHOD_NOT_FOUND }),
+			id: 2,
 			jsonrpc: '2.0'
 		})
 	})

@@ -16,8 +16,17 @@ export function createJRPCServer<TContext = unknown>(
 	methods: JRPCMethodMap<TContext>,
 	options: JRPCServerOptions<TContext> = {}
 ): JRPCServer<TContext> {
-	methods['rpc_discover'] = async (): Promise<string[]> => {
-		return Object.keys(methods)
+	const knownMethods = Object.keys(methods).reduce<JRPCMethodMap<TContext>>((registry, methodName) => {
+		registry[methodName] = methods[methodName]
+		return registry
+	}, Object.create(null) as JRPCMethodMap<TContext>)
+
+	if (options.enableDiscovery) {
+		if (Object.prototype.hasOwnProperty.call(knownMethods, 'rpc_discover')) {
+			throw new Error('Cannot enable discovery when rpc_discover is already registered')
+		}
+
+		knownMethods.rpc_discover = (): string[] => Object.keys(knownMethods)
 	}
 
 	const handleRequest = async (request: unknown, context?: TContext): Promise<JRPCResponse> => {
@@ -31,18 +40,18 @@ export function createJRPCServer<TContext = unknown>(
 			}
 
 			const responses = await Promise.all(
-				request.map(async (r) => processRequestActivity(r, methods, context, options.onError))
+				request.map(async (r) => processRequestActivity(r, knownMethods, context, options.onError))
 			)
 			const responseBodies = responses.filter((response): response is JRPCResponseBody => response !== undefined)
 			return responseBodies.length > 0 ? responseBodies : undefined
 		}
 
-		return processRequestActivity(request, methods, context, options.onError)
+		return processRequestActivity(request, knownMethods, context, options.onError)
 	}
 
 	return {
 		getRequestHandler: (methodName: string): JRPCMethodMap<TContext>[string] | undefined => {
-			return Object.prototype.hasOwnProperty.call(methods, methodName) ? methods[methodName] : undefined
+			return Object.prototype.hasOwnProperty.call(knownMethods, methodName) ? knownMethods[methodName] : undefined
 		},
 		handleRequest: handleRequest as JRPCRequestHandler<TContext>
 	}

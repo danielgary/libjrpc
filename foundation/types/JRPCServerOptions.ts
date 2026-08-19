@@ -11,5 +11,6 @@ export type JRPCErrorHandler<TContext = unknown> = (
 ) => Promise<void> | void
 
 export type JRPCServerOptions<TContext = unknown> = {
+	enableDiscovery?: boolean
 	onError?: JRPCErrorHandler<TContext>
 }
