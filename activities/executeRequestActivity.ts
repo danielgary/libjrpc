@@ -20,7 +20,7 @@ export async function executeRequestActivity(
 		const requestHandler = knownMethods[request.method]
 
 		const result = await requestHandler(request.params, context)
-		if (request.id) {
+		if (Object.prototype.hasOwnProperty.call(request, 'id')) {
 			return {
 				jsonrpc: '2.0',
 				result,
@@ -30,6 +30,10 @@ export async function executeRequestActivity(
 			return
 		}
 	} catch (err) {
+		if (!Object.prototype.hasOwnProperty.call(request, 'id')) {
+			return
+		}
+
 		if (err instanceof Error) {
 			return {
 				jsonrpc: '2.0',

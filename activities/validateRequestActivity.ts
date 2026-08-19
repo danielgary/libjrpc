@@ -13,7 +13,7 @@ export function validateRequestActivity(
 		return new JRPCError(JRPCErrorCodes.INVALID_REQUEST, `jsonrpc must equal '2.0', got ${request.jsonrpc}`, request)
 	}
 
-	if (!validateRequestId(request.id)) {
+	if (Object.prototype.hasOwnProperty.call(request, 'id') && !validateRequestId(request.id as string | number | null)) {
 		return new JRPCError(
 			JRPCErrorCodes.INVALID_REQUEST,
 			`Request ID must be a string, integer, or NULL, got ${request.id}`,

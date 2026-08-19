@@ -7,9 +7,12 @@ export async function processRequestActivity(
 	knownMethods: { [methodName: string]: JRPCMethod },
 	context?: unknown
 ): Promise<JRPCResponse> {
+	const isNotification = !Object.prototype.hasOwnProperty.call(request, 'id')
 	const validationResult = validateRequestActivity(request, knownMethods)
 	if (validationResult === null) {
 		return executeRequestActivity(request, knownMethods, context)
+	} else if (isNotification) {
+		return
 	} else {
 		return {
 			jsonrpc: '2.0',

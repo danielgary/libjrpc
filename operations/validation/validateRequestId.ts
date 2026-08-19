@@ -1,5 +1,5 @@
 export function validateRequestId(id: string | number | null): boolean {
-	if (typeof id === 'string' && id !== '') {
+	if (typeof id === 'string') {
 		return true
 	}
 	if (typeof id === 'number') {
