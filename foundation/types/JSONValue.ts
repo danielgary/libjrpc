@@ -32,3 +32,17 @@ function isJSONValueInternal(value: unknown, ancestors: object[]): value is JSON
 export function isJSONValue(value: unknown): value is JSONValue {
 	return isJSONValueInternal(value, [])
 }
+
+export function jsonSerializer(value: unknown): JSONValue {
+	const serialized = JSON.stringify(value)
+	if (serialized === undefined) {
+		throw new TypeError('JRPC value must be JSON-serializable')
+	}
+
+	const result: unknown = JSON.parse(serialized)
+	if (!isJSONValue(result)) {
+		throw new TypeError('JRPC serializer produced a non-JSON value')
+	}
+
+	return result
+}

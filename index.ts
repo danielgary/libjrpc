@@ -43,13 +43,13 @@ export function createJRPCServer<TContext = unknown>(
 			}
 
 			const responses = await Promise.all(
-				request.map(async (r) => processRequestActivity(r, knownMethods, context, options.onError))
+				request.map(async (r) => processRequestActivity(r, knownMethods, context, options))
 			)
 			const responseBodies = responses.filter((response): response is JRPCResponseBody => response !== undefined)
 			return responseBodies.length > 0 ? responseBodies : undefined
 		}
 
-		return processRequestActivity(request, knownMethods, context, options.onError)
+		return processRequestActivity(request, knownMethods, context, options)
 	}
 
 	return {

@@ -4,7 +4,7 @@ import { JRPCId } from '../foundation/types/JRPCId'
 import { JRPCMethodMap } from '../foundation/types/JRPCMethod'
 import { JRPCRequestBody } from '../foundation/types/JRPCRequestBody'
 import { JRPCResponseBody } from '../foundation/types/JRPCResponseBody'
-import { JRPCErrorHandler } from '../foundation/types/JRPCServerOptions'
+import { JRPCErrorHandler, JRPCServerOptions } from '../foundation/types/JRPCServerOptions'
 import { isJSONValue } from '../foundation/types/JSONValue'
 
 async function reportError<TContext>(
@@ -28,13 +28,14 @@ export async function executeRequestActivity<TContext>(
 	request: JRPCRequestBody,
 	knownMethods: JRPCMethodMap<TContext>,
 	context?: TContext,
-	onError?: JRPCErrorHandler<TContext>
+	options: JRPCServerOptions<TContext> = {}
 ): Promise<JRPCResponseBody | undefined> {
 	try {
 		const requestHandler = knownMethods[request.method]
 
 		const handlerResult = await requestHandler(request.params, context)
-		const result = handlerResult === undefined ? null : handlerResult
+		const rawResult = handlerResult === undefined ? null : handlerResult
+		const result = options.serializeResult ? options.serializeResult(rawResult) : rawResult
 		if (!isJSONValue(result)) {
 			throw new TypeError('JRPC method result must be JSON-compatible')
 		}
@@ -48,7 +49,7 @@ export async function executeRequestActivity<TContext>(
 			return
 		}
 	} catch (err) {
-		await reportError(onError, err, request, context)
+		await reportError(options.onError, err, request, context)
 
 		if (!Object.prototype.hasOwnProperty.call(request, 'id')) {
 			return

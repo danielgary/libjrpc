@@ -154,8 +154,28 @@ Throw `JRPCError` for expected application failures. Its integer code, message, 
 sent to the client. Other thrown values become a generic `-32603 Internal error`; their details are available only to
 the optional `onError` callback. Errors from that callback never alter the RPC response.
 
-Void method results become JSON `null`. Unsupported results such as `bigint`, functions, symbols, non-finite numbers,
-class instances, and cyclic objects become Internal error responses.
+Void method results become JSON `null`. By default, unsupported results such as `bigint`, functions, symbols,
+non-finite numbers, class instances, and cyclic objects become Internal error responses.
+
+### Optional result serialization
+
+Enable standard JSON serialization when handlers return values such as `Date` instances or objects with `toJSON`
+methods:
+
+```ts
+import { createJRPCServer, jsonSerializer } from 'libjrpc'
+
+const server = createJRPCServer(
+	{
+		currentTime: async () => ({ createdAt: new Date() })
+	},
+	{ serializeResult: jsonSerializer }
+)
+```
+
+The serializer runs after the handler resolves and before the result is validated. Dates become ISO strings, custom
+`toJSON` methods are honored, undefined object properties are omitted, and non-finite numbers become JSON `null`.
+Values that `JSON.stringify` cannot serialize, including `bigint` and cyclic objects, become Internal error responses.
 
 ## Method discovery
 

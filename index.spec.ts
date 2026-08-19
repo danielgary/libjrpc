@@ -1,4 +1,4 @@
-import { createJRPCServer, JRPCError, JRPCErrorCodes, JRPCMethodMap } from './index'
+import { createJRPCServer, JRPCError, JRPCErrorCodes, JRPCMethodMap, jsonSerializer } from './index'
 import { describe, expect, it, vi } from 'vitest'
 
 describe('createJRPCServer', () => {
@@ -281,6 +281,49 @@ describe('createJRPCServer', () => {
 			jsonrpc: '2.0',
 			result: { value: 'async-result' }
 		})
+	})
+
+	it('normalizes JSON-serializable results when explicitly enabled', async () => {
+		interface ActivityResponse {
+			createdAt: Date
+			nested: { updatedAt: Date }
+		}
+
+		const activity = async (): Promise<ActivityResponse> => ({
+			createdAt: new Date('2026-08-19T12:00:00.000Z'),
+			nested: { updatedAt: new Date('2026-08-20T13:30:00.000Z') }
+		})
+		const server = createJRPCServer({ activity }, { serializeResult: jsonSerializer })
+
+		expect(await server.handleRequest({ id: 1, jsonrpc: '2.0', method: 'activity' })).toEqual({
+			id: 1,
+			jsonrpc: '2.0',
+			result: {
+				createdAt: '2026-08-19T12:00:00.000Z',
+				nested: { updatedAt: '2026-08-20T13:30:00.000Z' }
+			}
+		})
+	})
+
+	it('turns result serializer failures into Internal error responses', async () => {
+		const serializerError = new Error('serializer failure')
+		const onError = vi.fn()
+		const server = createJRPCServer(
+			{ activity: async () => ({ value: 'result' }) },
+			{
+				onError,
+				serializeResult: () => {
+					throw serializerError
+				}
+			}
+		)
+
+		expect(await server.handleRequest({ id: 1, jsonrpc: '2.0', method: 'activity' })).toEqual({
+			error: expect.objectContaining({ code: JRPCErrorCodes.INTERNAL_ERROR, message: 'Internal error' }),
+			id: 1,
+			jsonrpc: '2.0'
+		})
+		expect(onError).toHaveBeenCalledWith(serializerError, expect.any(Object))
 	})
 
 	it.each([BigInt(1), Symbol('value'), () => undefined, new Date(), NaN, Infinity])(

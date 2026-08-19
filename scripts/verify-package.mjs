@@ -56,14 +56,25 @@ try {
 	await writeFile(
 		join(temporaryDirectory, 'runtime-smoke.cjs'),
 		`const assert = require('node:assert/strict')
-const { createJRPCServer, JRPCErrorCodes } = require('libjrpc')
+const { createJRPCServer, JRPCErrorCodes, jsonSerializer } = require('libjrpc')
 
 const server = createJRPCServer({ sum: (params) => params[0] + params[1] })
+const dateServer = createJRPCServer(
+  { now: () => new Date('2026-08-19T12:00:00.000Z') },
+  { serializeResult: jsonSerializer }
+)
 
-server
-  .handleRequest({ jsonrpc: '2.0', id: 1, method: 'sum', params: [2, 3] })
-  .then((response) => {
-    assert.deepEqual(response, { jsonrpc: '2.0', id: 1, result: 5 })
+Promise.all([
+  server.handleRequest({ jsonrpc: '2.0', id: 1, method: 'sum', params: [2, 3] }),
+  dateServer.handleRequest({ jsonrpc: '2.0', id: 2, method: 'now' })
+])
+  .then(([sumResponse, dateResponse]) => {
+    assert.deepEqual(sumResponse, { jsonrpc: '2.0', id: 1, result: 5 })
+    assert.deepEqual(dateResponse, {
+      jsonrpc: '2.0',
+      id: 2,
+      result: '2026-08-19T12:00:00.000Z'
+    })
     assert.equal(JRPCErrorCodes.METHOD_NOT_FOUND, -32601)
   })
   .catch((error) => {
@@ -82,12 +93,15 @@ server
 		join(temporaryDirectory, 'types-smoke.ts'),
 		`import {
   createJRPCServer,
+  jsonSerializer,
   type JRPCCall,
+  type JRPCResultSerializer,
   type JRPCResponseBody
 } from 'libjrpc'
 
 const request: JRPCCall = { jsonrpc: '2.0', id: 'smoke', method: 'echo', params: ['hello'] }
-const server = createJRPCServer({ echo: (params) => params ?? null })
+const serializer: JRPCResultSerializer = jsonSerializer
+const server = createJRPCServer({ echo: (params) => params ?? null }, { serializeResult: serializer })
 const response: Promise<JRPCResponseBody> = server.handleRequest(request)
 
 void response

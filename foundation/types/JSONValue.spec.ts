@@ -1,4 +1,4 @@
-import { isJSONValue } from './JSONValue'
+import { isJSONValue, jsonSerializer } from './JSONValue'
 import { describe, expect, it } from 'vitest'
 
 describe('isJSONValue', () => {
@@ -31,5 +31,39 @@ describe('isJSONValue', () => {
 		value.self = value
 
 		expect(isJSONValue(value)).toBe(false)
+	})
+})
+
+describe('jsonSerializer', () => {
+	it('normalizes nested dates and custom toJSON values', () => {
+		const value = {
+			createdAt: new Date('2026-08-19T12:00:00.000Z'),
+			custom: { toJSON: () => ({ serialized: true }) }
+		}
+
+		expect(jsonSerializer(value)).toEqual({
+			createdAt: '2026-08-19T12:00:00.000Z',
+			custom: { serialized: true }
+		})
+	})
+
+	it('uses standard JSON normalization semantics', () => {
+		expect(jsonSerializer({ array: [undefined, NaN, Infinity], omitted: undefined })).toEqual({
+			array: [null, null, null]
+		})
+	})
+
+	it.each([undefined, BigInt(1), Symbol('value'), () => undefined])(
+		'rejects an unserializable top-level value %p',
+		(value) => {
+			expect(() => jsonSerializer(value)).toThrow()
+		}
+	)
+
+	it('rejects cyclic values', () => {
+		const value: { self?: unknown } = {}
+		value.self = value
+
+		expect(() => jsonSerializer(value)).toThrow()
 	})
 })
