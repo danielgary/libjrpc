@@ -1,5 +1,6 @@
 import { JRPCMethod } from './foundation/types/JRPCMethod'
 import { JRPCServer } from './foundation/types/JRPCServer'
+import { JRPCServerOptions } from './foundation/types/JRPCServerOptions'
 
 import { JRPCResponse } from './foundation/types/JRPCResponse'
 import { JRPCResponseBody } from './foundation/types/JRPCResponseBody'
@@ -11,7 +12,7 @@ export * from './foundation/types'
 export { JRPCErrorCodes } from './foundation/constants/JRPCErrorCodes'
 export { JRPCError } from './foundation/JRPCError'
 
-export function createJRPCServer(methods: { [key: string]: JRPCMethod }): JRPCServer {
+export function createJRPCServer(methods: { [key: string]: JRPCMethod }, options: JRPCServerOptions = {}): JRPCServer {
 	methods['rpc_discover'] = async (): Promise<string[]> => {
 		return Object.keys(methods)
 	}
@@ -30,11 +31,13 @@ export function createJRPCServer(methods: { [key: string]: JRPCMethod }): JRPCSe
 					}
 				}
 
-				const responses = await Promise.all(request.map(async (r) => processRequestActivity(r, methods, context)))
+				const responses = await Promise.all(
+					request.map(async (r) => processRequestActivity(r, methods, context, options.onError))
+				)
 				const responseBodies = responses.filter((response): response is JRPCResponseBody => response !== undefined)
 				return responseBodies.length > 0 ? responseBodies : undefined
 			} else {
-				return processRequestActivity(request, methods, context)
+				return processRequestActivity(request, methods, context, options.onError)
 			}
 		}
 	}

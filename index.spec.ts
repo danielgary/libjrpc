@@ -1,4 +1,4 @@
-import { createJRPCServer, JRPCErrorCodes } from './index'
+import { createJRPCServer, JRPCError, JRPCErrorCodes } from './index'
 
 describe('createJRPCServer', () => {
 	const createServer = () =>
@@ -130,6 +130,114 @@ describe('createJRPCServer', () => {
 		expect(response).toEqual({
 			error: expect.objectContaining({ code: JRPCErrorCodes.INVALID_REQUEST }),
 			id: null,
+			jsonrpc: '2.0'
+		})
+	})
+
+	it('preserves deliberate application errors', async () => {
+		const server = createJRPCServer({
+			fail: async (): Promise<never> => {
+				throw new JRPCError(1234, 'custom', { reason: 'expected' })
+			}
+		})
+
+		const response = await server.handleRequest({ id: 1, jsonrpc: '2.0', method: 'fail' })
+
+		expect(response).toEqual({
+			error: expect.objectContaining({ code: 1234, data: { reason: 'expected' }, message: 'custom' }),
+			id: 1,
+			jsonrpc: '2.0'
+		})
+	})
+
+	it.each([new Error('sensitive database details'), 'sensitive string', { secret: 'sensitive object' }])(
+		'hides unexpected error details for %p',
+		async (thrownValue) => {
+			const server = createJRPCServer({
+				fail: async (): Promise<never> => {
+					throw thrownValue
+				}
+			})
+
+			const response = await server.handleRequest({ id: 1, jsonrpc: '2.0', method: 'fail' })
+			const serializedResponse = JSON.stringify(response)
+
+			expect(response).toEqual({
+				error: expect.objectContaining({ code: JRPCErrorCodes.INTERNAL_ERROR, message: 'Internal error' }),
+				id: 1,
+				jsonrpc: '2.0'
+			})
+			expect(serializedResponse).not.toContain('sensitive')
+		}
+	)
+
+	it('does not echo invalid request bodies in error data', async () => {
+		const response = await createServer().handleRequest({
+			id: 1,
+			jsonrpc: '1.0',
+			method: 'echo',
+			params: { password: 'do-not-echo' }
+		})
+
+		expect(JSON.stringify(response)).not.toContain('do-not-echo')
+	})
+
+	it('reports handler errors with request and server context', async () => {
+		const error = new Error('failure')
+		const onError = jest.fn()
+		const request = { id: 1, jsonrpc: '2.0', method: 'fail' }
+		const context = { traceId: 'trace-1' }
+		const server = createJRPCServer(
+			{
+				fail: async (): Promise<never> => {
+					throw error
+				}
+			},
+			{ onError }
+		)
+
+		await server.handleRequest(request, context)
+
+		expect(onError).toHaveBeenCalledWith(error, { context, request })
+	})
+
+	it('reports notification errors without returning a response', async () => {
+		const onError = jest.fn()
+		const request = { jsonrpc: '2.0', method: 'fail' }
+		const server = createJRPCServer(
+			{
+				fail: async (): Promise<never> => {
+					throw new Error('failure')
+				}
+			},
+			{ onError }
+		)
+
+		const response = await server.handleRequest(request)
+
+		expect(response).toBeUndefined()
+		expect(onError).toHaveBeenCalledWith(expect.any(Error), { context: undefined, request })
+	})
+
+	it('ignores failures from the error hook', async () => {
+		const server = createJRPCServer(
+			{
+				fail: async (): Promise<never> => {
+					throw new Error('handler failure')
+				}
+			},
+			{
+				onError: async (): Promise<void> => {
+					throw new Error('hook failure')
+				}
+			}
+		)
+
+		const response = await server.handleRequest({ id: 1, jsonrpc: '2.0', method: 'fail' })
+
+		expect(response).toEqual({
+			error: expect.objectContaining({ code: JRPCErrorCodes.INTERNAL_ERROR, message: 'Internal error' }),
+			id: 1,
 			jsonrpc: '2.0'
 		})
 	})

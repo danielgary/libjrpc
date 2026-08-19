@@ -1,11 +1,17 @@
 import { JRPCErrorCodes } from './constants/JRPCErrorCodes'
+import { JSONValue } from './types/JSONValue'
 
 export class JRPCError extends Error {
 	public code: JRPCErrorCodes | number
-	public data?: unknown | undefined
+	public data?: JSONValue | undefined
 
-	constructor(code: JRPCErrorCodes | number, message?: string, data?: unknown) {
+	constructor(code: JRPCErrorCodes | number, message?: string, data?: JSONValue) {
 		super(message) // 'Error' breaks prototype chain here
+		if (!Number.isInteger(code)) {
+			throw new TypeError('JRPC error code must be an integer')
+		}
+
+		this.name = 'JRPCError'
 		this.code = code
 		this.data = data
 		Object.setPrototypeOf(this, new.target.prototype) // restore prototype chain

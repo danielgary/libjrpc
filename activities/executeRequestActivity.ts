@@ -4,11 +4,30 @@ import { JRPCMethod } from '../foundation/types/JRPCMethod'
 import { JRPCRequestBody } from '../foundation/types/JRPCRequestBody'
 import { JRPCResponse } from '../foundation/types/JRPCResponse'
 import { JRPCResponseBody } from '../foundation/types/JRPCResponseBody'
+import { JRPCErrorHandler } from '../foundation/types/JRPCServerOptions'
+
+async function reportError(
+	onError: JRPCErrorHandler | undefined,
+	error: unknown,
+	request: JRPCRequestBody,
+	context?: unknown
+): Promise<void> {
+	if (!onError) {
+		return
+	}
+
+	try {
+		await onError(error, { context, request })
+	} catch {
+		// Observability failures must not change the JSON-RPC response.
+	}
+}
 
 export async function executeRequestActivity(
 	request: JRPCRequestBody,
 	knownMethods: { [methodName: string]: JRPCMethod },
-	context?: unknown
+	context?: unknown,
+	onError?: JRPCErrorHandler
 ): Promise<JRPCResponse> {
 	try {
 		const requestHandler = knownMethods[request.method]
@@ -24,22 +43,24 @@ export async function executeRequestActivity(
 			return
 		}
 	} catch (err) {
+		await reportError(onError, err, request, context)
+
 		if (!Object.prototype.hasOwnProperty.call(request, 'id')) {
 			return
 		}
 
-		if (err instanceof Error) {
+		if (err instanceof JRPCError) {
 			return {
 				jsonrpc: '2.0',
 				id: request.id,
-				error: new JRPCError(JRPCErrorCodes.INTERNAL_ERROR, err.message, err)
+				error: err
 			}
-		} else {
-			return {
-				jsonrpc: '2.0',
-				id: request.id,
-				error: new JRPCError(JRPCErrorCodes.INTERNAL_ERROR)
-			}
+		}
+
+		return {
+			jsonrpc: '2.0',
+			id: request.id,
+			error: new JRPCError(JRPCErrorCodes.INTERNAL_ERROR, 'Internal error')
 		}
 	}
 }

@@ -19,4 +19,8 @@ describe('JRPCError', () => {
 			expect(JSON.stringify(error)).toEqual(expectedResult)
 		})
 	})
+
+	it('should reject non-integer error codes', () => {
+		expect(() => new JRPCError(1.5, 'Invalid code')).toThrow('JRPC error code must be an integer')
+	})
 })
