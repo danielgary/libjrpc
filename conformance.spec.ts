@@ -7,6 +7,7 @@ import {
 	JRPCResponse,
 	JSONValue
 } from './index'
+import { describe, expect, it } from 'vitest'
 
 function toWireValue(response: JRPCResponse): JSONValue | undefined {
 	return response === undefined ? undefined : JSON.parse(JSON.stringify(response))

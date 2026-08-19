@@ -1,4 +1,5 @@
 import { isJSONValue } from './JSONValue'
+import { describe, expect, it } from 'vitest'
 
 describe('isJSONValue', () => {
 	it.each([

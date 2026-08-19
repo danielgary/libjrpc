@@ -1,4 +1,5 @@
-import { createJRPCServer, JRPCError, JRPCErrorCodes, JRPCMethodMap } from './index'
+import { createJRPCServer, JRPCError, JRPCErrorCodes, JRPCMethod, JRPCMethodMap } from './index'
+import { describe, expect, it, vi } from 'vitest'
 
 describe('createJRPCServer', () => {
 	const createServer = () =>
@@ -16,7 +17,7 @@ describe('createJRPCServer', () => {
 	})
 
 	it('executes a notification without returning a response', async () => {
-		const echo = jest.fn(async (params) => params)
+		const echo = vi.fn(async (params) => params)
 		const server = createJRPCServer({ echo })
 
 		const response = await server.handleRequest({ jsonrpc: '2.0', method: 'echo', params: ['value'] })
@@ -84,7 +85,7 @@ describe('createJRPCServer', () => {
 	})
 
 	it('allows params to be omitted', async () => {
-		const handler = jest.fn(async (params) => params)
+		const handler = vi.fn(async (params) => params)
 		const server = createJRPCServer({ handler })
 
 		const response = await server.handleRequest({ id: 1, jsonrpc: '2.0', method: 'handler' })
@@ -185,7 +186,7 @@ describe('createJRPCServer', () => {
 
 	it('reports handler errors with request and server context', async () => {
 		const error = new Error('failure')
-		const onError = jest.fn()
+		const onError = vi.fn()
 		const request = { id: 1, jsonrpc: '2.0', method: 'fail' }
 		const context = { traceId: 'trace-1' }
 		const server = createJRPCServer(
@@ -203,7 +204,7 @@ describe('createJRPCServer', () => {
 	})
 
 	it('reports notification errors without returning a response', async () => {
-		const onError = jest.fn()
+		const onError = vi.fn()
 		const request = { jsonrpc: '2.0', method: 'fail' }
 		const server = createJRPCServer(
 			{
@@ -256,8 +257,9 @@ describe('createJRPCServer', () => {
 	it.each([BigInt(1), Symbol('value'), () => undefined, new Date(), NaN, Infinity])(
 		'returns Internal error for unsupported result %p',
 		async (result) => {
-			const onError = jest.fn()
-			const server = createJRPCServer({ result: async (): Promise<any> => result }, { onError })
+			const onError = vi.fn()
+			const resultMethod = (async () => result) as unknown as JRPCMethod
+			const server = createJRPCServer({ result: resultMethod }, { onError })
 
 			const response = await server.handleRequest({ id: 1, jsonrpc: '2.0', method: 'result' })
 
@@ -273,7 +275,8 @@ describe('createJRPCServer', () => {
 	it('returns Internal error for cyclic results', async () => {
 		const result: { self?: unknown } = {}
 		result.self = result
-		const server = createJRPCServer({ result: async (): Promise<any> => result })
+		const resultMethod = (async () => result) as unknown as JRPCMethod
+		const server = createJRPCServer({ result: resultMethod })
 
 		const response = await server.handleRequest({ id: 1, jsonrpc: '2.0', method: 'result' })
 

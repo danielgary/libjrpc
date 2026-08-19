@@ -1,5 +1,6 @@
 import { JRPCError } from '../foundation/JRPCError'
 import { validateRequestActivity } from './validateRequestActivity'
+import { describe, expect, it } from 'vitest'
 
 const knownMethods = {
 	success: async function (): Promise<number> {

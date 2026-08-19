@@ -7,6 +7,7 @@ import {
 	JRPCSuccessResponse,
 	JSONValue
 } from '../../index'
+import { describe, expect, it } from 'vitest'
 
 function expectType<T>(_value: T): void {
 	return

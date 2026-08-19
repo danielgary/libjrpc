@@ -7,11 +7,14 @@ type ClientError = {
 }
 
 type ClientResponse<TResult extends JSONValue> =
-	| { error: ClientError; id: number; jsonrpc: '2.0' }
-	| { id: number; jsonrpc: '2.0'; result: TResult }
+	{ error: ClientError; id: number; jsonrpc: '2.0' } | { id: number; jsonrpc: '2.0'; result: TResult }
 
 export class RemoteJRPCError extends Error {
-	constructor(public readonly code: number, message: string, public readonly data?: JSONValue) {
+	constructor(
+		public readonly code: number,
+		message: string,
+		public readonly data?: JSONValue
+	) {
 		super(message)
 		this.name = 'RemoteJRPCError'
 		Object.setPrototypeOf(this, new.target.prototype)

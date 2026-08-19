@@ -9,14 +9,14 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22, 24]
     steps:
       - uses: actions/checkout@v2
-      # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v6
         with:
-          node-version: "24"
-          registry-url: "https://registry.npmjs.org"
-          package-manager-cache: false # never use caching in release builds
+          node-version: ${{ matrix.node-version }}
+          package-manager-cache: false
       - run: npm ci
-      - run: npm test
-      - run: npx tsc
+      - run: npm run verify

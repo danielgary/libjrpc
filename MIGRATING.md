@@ -4,6 +4,8 @@ Version 0.3 aligns the public TypeScript API with the JSON-RPC 2.0 wire contract
 `unknown` so transports can pass decoded request bodies directly, but exported request and response types are now
 strict protocol shapes.
 
+Version 0.3 requires Node.js 22.13 or newer.
+
 ## Handler types
 
 `JRPCMethod` accepts optional params, result, and context type arguments and supports synchronous and asynchronous

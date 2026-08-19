@@ -16,10 +16,13 @@ export function createJRPCServer<TContext = unknown>(
 	methods: JRPCMethodMap<TContext>,
 	options: JRPCServerOptions<TContext> = {}
 ): JRPCServer<TContext> {
-	const knownMethods = Object.keys(methods).reduce<JRPCMethodMap<TContext>>((registry, methodName) => {
-		registry[methodName] = methods[methodName]
-		return registry
-	}, Object.create(null) as JRPCMethodMap<TContext>)
+	const knownMethods = Object.keys(methods).reduce<JRPCMethodMap<TContext>>(
+		(registry, methodName) => {
+			registry[methodName] = methods[methodName]
+			return registry
+		},
+		Object.create(null) as JRPCMethodMap<TContext>
+	)
 
 	if (options.enableDiscovery) {
 		if (Object.prototype.hasOwnProperty.call(knownMethods, 'rpc_discover')) {

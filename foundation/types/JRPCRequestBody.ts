@@ -17,5 +17,4 @@ export type JRPCNotification<TParams extends JRPCParams | undefined = JRPCParams
 	}
 
 export type JRPCRequestBody<TParams extends JRPCParams | undefined = JRPCParams | undefined> =
-	| JRPCCall<TParams>
-	| JRPCNotification<TParams>
+	JRPCCall<TParams> | JRPCNotification<TParams>

@@ -1,5 +1,6 @@
 import { JRPCErrorCodes } from './constants/JRPCErrorCodes'
 import { JRPCError } from './JRPCError'
+import { describe, expect, it } from 'vitest'
 
 describe('JRPCError', () => {
 	describe('toJSON', () => {
@@ -25,7 +26,9 @@ describe('JRPCError', () => {
 	})
 
 	it('should reject non-JSON error data', () => {
-		expect(() => new JRPCError(1234, 'Invalid data', { value: undefined } as any)).toThrow(
+		const UnsafeJRPCError = JRPCError as unknown as new (code: number, message: string, data: unknown) => JRPCError
+
+		expect(() => new UnsafeJRPCError(1234, 'Invalid data', { value: undefined })).toThrow(
 			'JRPC error data must be JSON-compatible'
 		)
 	})

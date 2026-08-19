@@ -1,4 +1,5 @@
 import { validateRequestId } from './validateRequestId'
+import { describe, expect, it } from 'vitest'
 
 describe('validateRequestId', () => {
 	it('Should return false if the id is undefined', () => {
