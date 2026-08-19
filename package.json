@@ -1,8 +1,12 @@
 {
 	"name": "libjrpc",
-	"version": "0.2.3",
+	"version": "0.3.0",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
+	"files": [
+		"dist",
+		"MIGRATING.md"
+	],
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
@@ -18,13 +22,17 @@
 		"node": ">=22.13"
 	},
 	"scripts": {
-		"build": "tsc -p tsconfig.build.json",
+		"build": "npm run clean && tsc -p tsconfig.build.json",
+		"clean": "node scripts/clean.mjs",
 		"format:check": "prettier --check .",
 		"lint": "eslint .",
+		"prepack": "npm run build",
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"typecheck": "tsc -p tsconfig.json",
-		"verify": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build"
+		"verify": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
+		"verify:package": "node scripts/verify-package.mjs",
+		"verify:release-tag": "node scripts/verify-release-tag.mjs"
 	},
 	"license": "MIT",
 	"author": "Daniel Gary",
