@@ -36,35 +36,29 @@ export function validateRequestActivity<TContext>(
 	knownMethods: JRPCMethodMap<TContext>
 ): JRPCError | null {
 	if (!isRequestObject(request)) {
-		return new JRPCError(JRPCErrorCodes.INVALID_REQUEST, 'Request must be an object')
+		return new JRPCError(JRPCErrorCodes.INVALID_REQUEST, 'Invalid Request')
 	}
 
 	if (request.jsonrpc !== '2.0') {
-		return new JRPCError(JRPCErrorCodes.INVALID_REQUEST, `jsonrpc must equal '2.0', got ${request.jsonrpc}`)
+		return new JRPCError(JRPCErrorCodes.INVALID_REQUEST, 'Invalid Request')
 	}
 
 	if (typeof request.method !== 'string') {
-		return new JRPCError(JRPCErrorCodes.INVALID_REQUEST, 'Method must be a string')
+		return new JRPCError(JRPCErrorCodes.INVALID_REQUEST, 'Invalid Request')
 	}
 
 	if (hasOwnMember(request, 'id') && !validateRequestId(request.id)) {
-		return new JRPCError(
-			JRPCErrorCodes.INVALID_REQUEST,
-			`Request ID must be a string, integer, or NULL, got ${request.id}`
-		)
+		return new JRPCError(JRPCErrorCodes.INVALID_REQUEST, 'Invalid Request')
 	}
 
 	const hasHandler = Object.prototype.hasOwnProperty.call(knownMethods, request.method)
 	const handler = hasHandler ? knownMethods[request.method] : undefined
 	if (typeof handler !== 'function') {
-		return new JRPCError(JRPCErrorCodes.METHOD_NOT_FOUND, `No method found for ${request.method}`)
+		return new JRPCError(JRPCErrorCodes.METHOD_NOT_FOUND, 'Method not found')
 	}
 
 	if (hasOwnMember(request, 'params') && !isRequestObject(request.params) && !Array.isArray(request.params)) {
-		return new JRPCError(
-			JRPCErrorCodes.INVALID_PARAMS,
-			`Params must be an object or array, got ${typeof request.params}`
-		)
+		return new JRPCError(JRPCErrorCodes.INVALID_PARAMS, 'Invalid params')
 	}
 
 	return null
