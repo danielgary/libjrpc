@@ -10,11 +10,13 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - name: Git Checkout
-        uses: actions/checkout@v1
-      - name: Install Package Dependencies
-        run: yarn install
-      - name: Run Tests
-        run: yarn jest
-      - name: Compile
-        run: yarn tsc
+      - uses: actions/checkout@v2
+      # Setup .npmrc file to publish to npm
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false # never use caching in release builds
+      - run: npm ci
+      - run: npm test
+      - run: npx tsc
