@@ -1,4 +1,4 @@
-import { createJRPCServer, JRPCError, JRPCErrorCodes, JRPCMethod, JRPCMethodMap } from './index'
+import { createJRPCServer, JRPCError, JRPCErrorCodes, JRPCMethodMap } from './index'
 import { describe, expect, it, vi } from 'vitest'
 
 describe('createJRPCServer', () => {
@@ -254,11 +254,40 @@ describe('createJRPCServer', () => {
 		expect(JSON.parse(JSON.stringify(response))).toEqual(response)
 	})
 
+	it('registers async methods returning interface responses without wrappers', async () => {
+		interface ActivityArgs {
+			value: string
+		}
+		interface ActivityContext {
+			prefix: string
+		}
+		interface ActivityResponse {
+			value: string
+		}
+
+		const methodName = 'activity'
+		const activity = async (args: ActivityArgs, context: ActivityContext): Promise<ActivityResponse> => ({
+			value: `${context.prefix}${args.value}`
+		})
+		const server = createJRPCServer<ActivityContext>({ [methodName]: activity })
+
+		expect(
+			await server.handleRequest(
+				{ id: 1, jsonrpc: '2.0', method: methodName, params: { value: 'result' } },
+				{ prefix: 'async-' }
+			)
+		).toEqual({
+			id: 1,
+			jsonrpc: '2.0',
+			result: { value: 'async-result' }
+		})
+	})
+
 	it.each([BigInt(1), Symbol('value'), () => undefined, new Date(), NaN, Infinity])(
 		'returns Internal error for unsupported result %p',
 		async (result) => {
 			const onError = vi.fn()
-			const resultMethod = (async () => result) as unknown as JRPCMethod
+			const resultMethod = async () => result
 			const server = createJRPCServer({ result: resultMethod }, { onError })
 
 			const response = await server.handleRequest({ id: 1, jsonrpc: '2.0', method: 'result' })
@@ -275,7 +304,7 @@ describe('createJRPCServer', () => {
 	it('returns Internal error for cyclic results', async () => {
 		const result: { self?: unknown } = {}
 		result.self = result
-		const resultMethod = (async () => result) as unknown as JRPCMethod
+		const resultMethod = async () => result
 		const server = createJRPCServer({ result: resultMethod })
 
 		const response = await server.handleRequest({ id: 1, jsonrpc: '2.0', method: 'result' })

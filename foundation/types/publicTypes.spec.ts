@@ -37,6 +37,24 @@ describe('public types', () => {
 		expect(await syncMethod({ values: [] }, { prefix: 'x' })).toBe(1)
 	})
 
+	it('supports interface-shaped params and method results', async () => {
+		interface Context {
+			prefix: string
+		}
+		interface Params {
+			value: string
+		}
+		interface Result {
+			value: string
+		}
+
+		const method: JRPCMethod<Params, Result, Context> = async (params, context) => ({
+			value: `${context?.prefix ?? ''}${params.value}`
+		})
+
+		expect((await method({ value: 'result' }, { prefix: 'async-' })).value).toBe('async-result')
+	})
+
 	it('makes success and error responses mutually exclusive', () => {
 		const success: JRPCSuccessResponse = { id: 1, jsonrpc: '2.0', result: null }
 		const error: JRPCResponseBody = {
