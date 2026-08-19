@@ -1,5 +1,4 @@
 import { JRPCMethod } from './foundation/types/JRPCMethod'
-import { JRPCRequest } from './foundation/types/JRPCRequest'
 import { JRPCServer } from './foundation/types/JRPCServer'
 
 import { JRPCResponse } from './foundation/types/JRPCResponse'
@@ -19,9 +18,9 @@ export function createJRPCServer(methods: { [key: string]: JRPCMethod }): JRPCSe
 
 	return {
 		getRequestHandler: (methodName: string): JRPCMethod | undefined => {
-			return methods[methodName] || undefined
+			return Object.prototype.hasOwnProperty.call(methods, methodName) ? methods[methodName] : undefined
 		},
-		handleRequest: async (request: JRPCRequest, context?: unknown): Promise<JRPCResponse | JRPCResponse[]> => {
+		handleRequest: async (request: unknown, context?: unknown): Promise<JRPCResponse | JRPCResponse[]> => {
 			if (Array.isArray(request)) {
 				if (request.length === 0) {
 					return {

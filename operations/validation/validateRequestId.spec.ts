@@ -2,7 +2,7 @@ import { validateRequestId } from './validateRequestId'
 
 describe('validateRequestId', () => {
 	it('Should return false if the id is undefined', () => {
-		expect(validateRequestId(undefined as any)).toBeFalsy()
+		expect(validateRequestId(undefined)).toBeFalsy()
 	})
 	it('Should return false if the id is a decimal', () => {
 		expect(validateRequestId(1.23)).toBeFalsy()

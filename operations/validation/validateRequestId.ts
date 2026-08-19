@@ -1,4 +1,4 @@
-export function validateRequestId(id: string | number | null): boolean {
+export function validateRequestId(id: unknown): id is string | number | null {
 	if (typeof id === 'string') {
 		return true
 	}

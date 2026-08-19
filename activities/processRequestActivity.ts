@@ -1,23 +1,23 @@
 import { JRPCMethod, JRPCRequestBody, JRPCResponse } from '../foundation/types'
 import { executeRequestActivity } from './executeRequestActivity'
-import { validateRequestActivity } from './validateRequestActivity'
+import { getRequestId, isNotificationRequest, validateRequestActivity } from './validateRequestActivity'
 
 export async function processRequestActivity(
-	request: JRPCRequestBody,
+	request: unknown,
 	knownMethods: { [methodName: string]: JRPCMethod },
 	context?: unknown
 ): Promise<JRPCResponse> {
-	const isNotification = !Object.prototype.hasOwnProperty.call(request, 'id')
+	const isNotification = isNotificationRequest(request)
 	const validationResult = validateRequestActivity(request, knownMethods)
 	if (validationResult === null) {
-		return executeRequestActivity(request, knownMethods, context)
+		return executeRequestActivity(request as JRPCRequestBody, knownMethods, context)
 	} else if (isNotification) {
 		return
 	} else {
 		return {
 			jsonrpc: '2.0',
 			error: validationResult,
-			id: request.id
+			id: getRequestId(request)
 		}
 	}
 }

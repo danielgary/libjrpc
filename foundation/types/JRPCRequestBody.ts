@@ -3,5 +3,5 @@ export type JRPCRequestBody = {
 	jsonrpc: string
 	method: string
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	params: any
+	params?: any
 }
